@@ -27,31 +27,18 @@ def map():
 
 @app.route("/stations")
 def stations():
-    stations = []
-    for feature in geojson_data["features"]:
-        line = feature["properties"]["LINE"]
-        station_name = feature["properties"]["STATION"]
-        longitude, latitude = feature["geometry"]["coordinates"]
-        stations.append({"line": line, "name": station_name, "latitude": latitude, "longitude": longitude})
-
-    print(stations)
-
+    stations = [{"line": feature["properties"]["LINE"], "name": feature["properties"]["STATION"], "latitude": feature["geometry"]["coordinates"][1], "longitude": feature["geometry"]["coordinates"][0]}
+                for feature in geojson_data["features"]]
+    
     return json.dumps({"items": stations})
 
 @app.route("/train_locations")
 def trains():
     train_data = requests.get("https://api.metro.net/LACMTA_Rail/vehicle_positions/all?geojson=false").json()
 
-    # Extract train data and format it to be easily consumed by the frontend
-    trains = []
-    for train in train_data:
-        try:
-            train_id = train["trip"]["trip_id"]
-            latitude = train["position"]["latitude"]
-            longitude = train["position"]["longitude"]
-            trains.append({"id": train_id, "latitude": latitude, "longitude": longitude})
-        except KeyError:
-            continue
+    # Extract train data and format it to be easily consumed by the frontend using list comprehension
+    trains = [{"id": train["trip"]["trip_id"], "latitude": train["position"]["latitude"], "longitude": train["position"]["longitude"]}
+              for train in train_data if "trip" in train and "trip_id" in train["trip"] and "position" in train]
 
     return json.dumps({"items": trains})
 
